@@ -80,3 +80,6 @@ class Dataset(object):
 
     def get_dimensions(self):
         return (self.N, self.T, self.D)
+
+    def get_num_of_labels(self):
+        return num_labels
