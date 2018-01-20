@@ -8,7 +8,7 @@ N, T, D = dataset.get_dimensions()
 num_labels = dataset.get_num_of_labels()
 num_channels = 1
 
-batch_size = 16
+batch_size = 251
 patch_t_size = 5
 patch_D_size = 1
 depth = 16
@@ -45,8 +45,9 @@ with graph.as_default():
     def model(data):
         conv = tf.nn.conv2d(data, layer1_weights, [1, 1, 1, 1], padding='SAME')
         hidden = tf.nn.relu(conv + layer1_biases)
-        conv = tf.nn.conv2d(hidden, layer2_weights, [1, 1, 1, 1], padding='SAME')
-        hidden = tf.nn.relu(conv + layer2_biases)
+        # conv = tf.nn.conv2d(hidden, layer2_weights, [1, 1, 1, 1], padding='SAME')
+        # hidden = tf.nn.relu(conv + layer2_biases)
+        hidden = tf.nn.max_pool(hidden, ksize=[1, round(0.1*T), 1, 1], strides=[1, round(0.1*T), 1, 1], padding='SAME')
         shape = hidden.get_shape().as_list()
         reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
         hidden = tf.nn.relu(tf.matmul(reshape, layer3_weights) + layer3_biases)
@@ -63,7 +64,7 @@ with graph.as_default():
         tf.nn.softmax_cross_entropy_with_logits(labels=tf_train_labels, logits=logits))
 
     # Optimizer.
-    optimizer = tf.train.GradientDescentOptimizer(0.05).minimize(loss)
+    optimizer = tf.train.GradientDescentOptimizer(0.005).minimize(loss)
 
     # Predictions for the training, validation, and test data.
     train_prediction = tf.nn.softmax(logits)
@@ -71,7 +72,7 @@ with graph.as_default():
     test_prediction = tf.nn.softmax(model(tf_test_dataset))
 
 
-num_steps = 1001
+num_steps = 20000
 
 train_dataset = dataset.get_training_set()
 train_labels = dataset.get_train_labels()
