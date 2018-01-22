@@ -44,12 +44,17 @@ assert training_set_percentage + \
         test_set_percentage == 1.0
 
 class Dataset(object):
-    def __init__(self):
+    def __init__(self, random_permutation=False):
         with open(FILENAME, 'r') as f:
             lines = f.readlines()
 
         N = len(lines)
         T = (len(lines[0].split(','))-1) / D
+
+        if random_permutation is True:
+            permutations = np.random.permutation(N)
+        else:
+            permutations = PERMUTATIONS
 
         # Check that T*D == number of measurements in sample
         assert T*D == (len(lines[0].split(','))-1)
@@ -64,7 +69,7 @@ class Dataset(object):
 
         assert labels_one_hot[359, 14] == 1
 
-        labels_one_hot = labels_one_hot[PERMUTATIONS,:]
+        labels_one_hot = labels_one_hot[permutations,:]
 
         samples = data_from_csv[:,:-1]
         samples_x = samples[:,0::D]
@@ -77,7 +82,7 @@ class Dataset(object):
         assert dataset[1,0,1] == 0.27315
         assert dataset[N-1,T-1,1] == 0.49306
 
-        dataset = dataset[PERMUTATIONS,:,:,:]
+        dataset = dataset[permutations,:,:,:]
 
         training_set_len = int(round(training_set_percentage*N))
         training_set = dataset[:training_set_len, :, :, :]
