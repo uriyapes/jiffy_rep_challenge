@@ -160,9 +160,9 @@ class Dataset(object):
 
 if __name__=='__main__':
     ds = Dataset()
-    d1 = ds.dataset_to_dict(ds.dataset, ds.labels)
-    d2 = ds.dataset_to_dict(ds.training_set, ds.training_labels)
-    d2.update(ds.dataset_to_dict(ds.validation_set, ds.validation_labels))
-    d2.update(ds.dataset_to_dict(ds.test_set, ds.test_labels))
+    d1 = ds.dataset_to_dict(ds.dataset, ds.labels.astype('int64'))
+    d2 = ds.dataset_to_dict(ds.training_set, np.argmax(ds.training_labels, 1)+1)
+    d2.update(ds.dataset_to_dict(ds.validation_set, np.argmax(ds.validation_labels, 1)+1))
+    d2.update(ds.dataset_to_dict(ds.test_set, np.argmax(ds.test_labels, 1)+1))
     print d1 == d2
 
