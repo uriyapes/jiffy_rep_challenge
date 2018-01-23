@@ -23,6 +23,7 @@ class Model(object):
         max_pool_percentage = 0.1
         max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / max_pool_window_size))
+        init_learning_rate = 0.005
 
         self.graph = tf.Graph()
 
@@ -78,11 +79,14 @@ class Model(object):
             self.loss = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(labels=self.tf_train_labels, logits=logits))
             # Optimizer.
-            self.optimizer = tf.train.GradientDescentOptimizer(0.005).minimize(self.loss)
+            # self.optimizer = tf.train.GradientDescentOptimizer(0.005).minimize(self.loss)
+            self.optimizer = self.build_optimizer(init_learning_rate)
 
+    def build_optimizer(self, init_learning_rate):
+        return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
-        num_steps = 20000
+        num_steps = 3000
 
         train_dataset = self.dataset.get_training_set()
         train_labels = self.dataset.get_train_labels()
@@ -110,7 +114,7 @@ class Model(object):
             nn = nearest_neighbor.NearestNeighbor()
             print train_embed_vec
             print self.test_embed_vec.eval()
-            print('Test accuracy for 1NN: %.1f%%' % nn.compute_one_nearest_neighbor_accuracy
+            print('Test accuracy for 1NN: %.3f' % nn.compute_one_nearest_neighbor_accuracy
                     (train_embed_vec, train_labels, self.test_embed_vec.eval(), test_labels))
 
     def accuracy(self, predictions, labels):
@@ -121,4 +125,3 @@ if __name__ == '__main__':
     libras_model = Model()
     libras_model.build_model()
     libras_model.train_model()
-
