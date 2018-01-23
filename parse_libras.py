@@ -30,6 +30,7 @@ class Dataset(object):
 
         #  samples = np.array(N, T, D, 1)
         data_from_csv = np.genfromtxt(FILENAME, delimiter=',')
+        data_from_csv[np.arange(N),0] = np.arange(N)
 
         labels = data_from_csv[:,-1]
         labels_one_hot = \
@@ -50,7 +51,7 @@ class Dataset(object):
         dataset = dataset[:,:,:,None]
 
         assert (N, T, D, 1) == dataset.shape
-        assert dataset[0,0,0] == 0.79691
+        #  assert dataset[0,0,0] == 0.79691
         assert dataset[1,0,1] == 0.27315
         assert dataset[N-1,T-1,1] == 0.49306
 
@@ -161,8 +162,18 @@ class Dataset(object):
 if __name__=='__main__':
     ds = Dataset()
     d1 = ds.dataset_to_dict(ds.dataset, ds.labels.astype('int64'))
-    d2 = ds.dataset_to_dict(ds.training_set, np.argmax(ds.training_labels, 1)+1)
-    d2.update(ds.dataset_to_dict(ds.validation_set, np.argmax(ds.validation_labels, 1)+1))
-    d2.update(ds.dataset_to_dict(ds.test_set, np.argmax(ds.test_labels, 1)+1))
+    tr_labels = np.argmax(ds.training_labels, 1)+1
+    va_labels = np.argmax(ds.validation_labels, 1)+1
+    te_labels = np.argmax(ds.test_labels, 1)+1
+    d2 = ds.dataset_to_dict(ds.training_set, tr_labels)
+    d2.update(ds.dataset_to_dict(ds.validation_set, va_labels))
+    d2.update(ds.dataset_to_dict(ds.test_set, te_labels))
     print d1 == d2
+
+    z1 = zip(ds.dataset[:,0,0,0],ds.labels.astype('int64'))
+    z2 = zip(ds.training_set[:,0,0,0],tr_labels)
+    z2.extend(zip(ds.validation_set[:,0,0,0],va_labels))
+    z2.extend(zip(ds.test_set[:,0,0,0],te_labels))
+
+    print set(z1)==set(z2)
 
