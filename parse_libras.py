@@ -68,6 +68,9 @@ class Dataset(object):
         test_set_len = test_set.shape[0]
         assert training_set_len + validation_set_len + test_set_len == N
 
+        self.dataset = dataset
+        self.labels = labels
+
         self.training_set = training_set
         self.validation_set = validation_set
         self.test_set = test_set
@@ -132,6 +135,15 @@ class Dataset(object):
         permutations = np.random.permutation(len(vector))
         return vector[permutations]
 
+    @classmethod
+    def dataset_to_dict(cls, dataset, labels):
+        d = dict()
+        for ii in range(dataset.shape[0]):
+            sample = dataset[ii, :, :, :]
+            label = labels[ii]
+            d[sample.tostring()] = label.tostring()
+        return d
+
 #  if __name__=='__main__':
     #  ds = Dataset()
     #  #  labels = np.concatenate([1 * np.ones(11), 2 * np.ones(11), 3 * np.ones(11)]).astype(int)
@@ -145,3 +157,12 @@ class Dataset(object):
     #  import collections
     #  for ii in xx:
         #  print collections.Counter(ii)
+
+if __name__=='__main__':
+    ds = Dataset()
+    d1 = ds.dataset_to_dict(ds.dataset, ds.labels)
+    d2 = ds.dataset_to_dict(ds.training_set, ds.training_labels)
+    d2.update(ds.dataset_to_dict(ds.validation_set, ds.validation_labels))
+    d2.update(ds.dataset_to_dict(ds.test_set, ds.test_labels))
+    print d1 == d2
+
