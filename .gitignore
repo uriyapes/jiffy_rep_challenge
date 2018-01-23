@@ -2,3 +2,5 @@ Pycharm_proj
 tags
 *.pyc
 datasets/
+.floo
+.flooignore
