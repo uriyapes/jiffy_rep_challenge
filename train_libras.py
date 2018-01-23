@@ -112,8 +112,6 @@ class Model(object):
                         self.valid_prediction.eval(), valid_labels))
             print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(), test_labels))
             nn = nearest_neighbor.NearestNeighbor()
-            print train_embed_vec
-            print self.test_embed_vec.eval()
             print('Test accuracy for 1NN: %.3f' % nn.compute_one_nearest_neighbor_accuracy
                     (train_embed_vec, train_labels, self.test_embed_vec.eval(), test_labels))
 
