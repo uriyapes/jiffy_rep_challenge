@@ -3,6 +3,7 @@ import tensorflow as tf
 import parse_libras
 import nearest_neighbor
 import numpy as np
+from tensorflow.python.ops import gen_nn_ops
 
 
 class Model(object):
@@ -35,6 +36,8 @@ class Model(object):
             # tf_valid_dataset = tf.constant(self.dataset.get_validation_set())
             tf_test_dataset = tf.constant(self.dataset.get_test_set())
 
+            self.max_pool_window_size = tf.placeholder(tf.int32, shape=())
+
             # Variables.
             layer1_weights = tf.Variable(tf.truncated_normal(
                 [self.patch_t_size, self.patch_D_size, num_channels, depth], stddev=0.1))
@@ -52,9 +55,13 @@ class Model(object):
             def model(data):
                 conv = tf.nn.conv2d(data, layer1_weights, [1, 1, 1, 1], padding='SAME')
                 hidden = tf.nn.relu(conv + layer1_biases)
-                hidden = tf.nn.max_pool(hidden, ksize=[1, max_pool_window_size, 1, 1], strides=[1, max_pool_window_size, 1, 1], padding='SAME')
-                shape = hidden.get_shape().as_list()
-                reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
+                hidden = gen_nn_ops._max_pool_v2(
+                        hidden,
+                        ksize=[1, self.max_pool_window_size, 1, 1],
+                        strides=[1, self.max_pool_window_size, 1, 1],
+                        padding='SAME')
+                N = data.get_shape().as_list()[0]
+                reshape = tf.reshape(hidden, [N, 9 * D * depth])
                 hidden_no_relu = tf.matmul(reshape, layer2_weights) + layer2_biases
                 hidden = tf.nn.relu(hidden_no_relu)
                 return (tf.matmul(hidden, layer3_weights) + layer3_biases), hidden
@@ -94,7 +101,8 @@ class Model(object):
                 offset = (step * self.batch_size) % (train_labels.shape[0] - self.batch_size)
                 batch_data = train_dataset[offset:(offset + self.batch_size), :, :, :]
                 batch_labels = train_labels[offset:(offset + self.batch_size), :]
-                feed_dict = {self.tf_train_dataset : batch_data, self.tf_train_labels : batch_labels}
+                feed_dict = {self.tf_train_dataset : batch_data, self.tf_train_labels : batch_labels,
+                        self.max_pool_window_size : 5}
                 _, l, predictions, train_embed_vec = session.run(
                     [self.optimizer, self.loss, self.train_prediction, self.train_embed_vec], feed_dict=feed_dict)
                 if (step % 50 == 0):
@@ -104,10 +112,10 @@ class Model(object):
                     print('Minibatch accuracy: %.1f%%' % self.accuracy(predictions, batch_labels))
                     # print('Validation accuracy: %.1f%%' % self.accuracy(
                     #     self.valid_prediction.eval(), valid_labels))
-            print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(), test_labels))
+            print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size : 5}), test_labels))
             nn = nearest_neighbor.NearestNeighbor()
             print('Test accuracy for 1NN: %.3f' % nn.compute_one_nearest_neighbor_accuracy
-                    (train_embed_vec, train_labels, self.test_embed_vec.eval(), test_labels))
+                    (train_embed_vec, train_labels, self.test_embed_vec.eval(feed_dict={self.max_pool_window_size : 5}), test_labels))
 
         import collections
         print collections.Counter(tuple(np.argmax(train_labels,1)+1))
