@@ -15,7 +15,7 @@ class Model(object):
         num_labels = self.dataset.get_num_of_labels()
         num_channels = 1
 
-        self.batch_size = 251
+        self.batch_size = 287
         self.patch_t_size = 5
         self.patch_D_size = 1
         depth = 16
@@ -23,7 +23,7 @@ class Model(object):
         max_pool_percentage = 0.1
         max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / max_pool_window_size))
-        init_learning_rate = 0.005
+        init_learning_rate = 2*10**-5
 
         self.graph = tf.Graph()
 
@@ -32,7 +32,7 @@ class Model(object):
             self.tf_train_dataset = tf.placeholder(
                 tf.float32, shape=(self.batch_size, T, D, num_channels))
             self.tf_train_labels = tf.placeholder(tf.float32, shape=(self.batch_size, num_labels))
-            tf_valid_dataset = tf.constant(self.dataset.get_validation_set())
+            # tf_valid_dataset = tf.constant(self.dataset.get_validation_set())
             tf_test_dataset = tf.constant(self.dataset.get_test_set())
 
             # Variables.
@@ -70,8 +70,8 @@ class Model(object):
             logits, self.train_embed_vec = model(self.tf_train_dataset)
             self.train_prediction = tf.nn.softmax(logits)
 
-            valid_logits, _ = model(tf_valid_dataset)
-            self.valid_prediction = tf.nn.softmax(valid_logits)
+            # valid_logits, _ = model(tf_valid_dataset)
+            # self.valid_prediction = tf.nn.softmax(valid_logits)
 
             self.test_logits, self.test_embed_vec = model(tf_test_dataset)
             self.test_prediction = tf.nn.softmax(self.test_logits)
@@ -86,11 +86,11 @@ class Model(object):
         return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
-        num_steps = 3000
+        num_steps = 20000
 
-        train_dataset = self.dataset.get_training_set()
+        train_dataset = self.dataset.get_train_set()
         train_labels = self.dataset.get_train_labels()
-        valid_labels = self.dataset.get_validation_labels()
+        # valid_labels = self.dataset.get_validation_labels()
         test_labels = self.dataset.get_test_labels()
 
         with tf.Session(graph=self.graph) as session:
@@ -108,12 +108,16 @@ class Model(object):
                     print('predictions: {}'.format(np.argmax(predictions, 1)))
                     print('Minibatch loss at step %d: %f' % (step, l))
                     print('Minibatch accuracy: %.1f%%' % self.accuracy(predictions, batch_labels))
-                    print('Validation accuracy: %.1f%%' % self.accuracy(
-                        self.valid_prediction.eval(), valid_labels))
+                    # print('Validation accuracy: %.1f%%' % self.accuracy(
+                    #     self.valid_prediction.eval(), valid_labels))
             print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(), test_labels))
             nn = nearest_neighbor.NearestNeighbor()
             print('Test accuracy for 1NN: %.3f' % nn.compute_one_nearest_neighbor_accuracy
                     (train_embed_vec, train_labels, self.test_embed_vec.eval(), test_labels))
+
+        import collections
+        print collections.Counter(tuple(np.argmax(train_labels,1)+1))
+        print collections.Counter(tuple(np.argmax(test_labels,1)+1))
 
     def accuracy(self, predictions, labels):
         return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
