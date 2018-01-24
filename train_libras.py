@@ -16,7 +16,7 @@ class Model(object):
         num_labels = self.dataset.get_num_of_labels()
         num_channels = 1
 
-        self.batch_size = 251
+        self.batch_size = 287
         self.patch_t_size = 5
         self.patch_D_size = 1
         depth = 16
@@ -24,7 +24,7 @@ class Model(object):
         max_pool_percentage = 0.1
         max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / max_pool_window_size))
-        init_learning_rate = 0.005
+        init_learning_rate = 2e-5
 
         self.graph = tf.Graph()
 
@@ -87,7 +87,7 @@ class Model(object):
         return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
-        num_steps = 3000
+        num_steps = 20000
 
         train_dataset = self.dataset.get_train_set()
         train_labels = self.dataset.get_train_labels()
