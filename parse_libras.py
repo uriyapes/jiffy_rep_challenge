@@ -168,12 +168,29 @@ if __name__=='__main__':
     d2 = ds.dataset_to_dict(ds.training_set, tr_labels)
     d2.update(ds.dataset_to_dict(ds.validation_set, va_labels))
     d2.update(ds.dataset_to_dict(ds.test_set, te_labels))
+
+    # Should be True
     print d1 == d2
 
     z1 = zip(ds.dataset[:,0,0,0],ds.labels.astype('int64'))
+
     z2 = zip(ds.training_set[:,0,0,0],tr_labels)
     z2.extend(zip(ds.validation_set[:,0,0,0],va_labels))
     z2.extend(zip(ds.test_set[:,0,0,0],te_labels))
 
+    # Should be True
     print set(z1)==set(z2)
+
+    # Negative check
+    print tr_labels[:3]
+    tr_labels[0] = tr_labels[1]
+    print tr_labels[:3]
+
+    z2 = zip(ds.training_set[:,0,0,0],tr_labels)
+    z2.extend(zip(ds.validation_set[:,0,0,0],va_labels))
+    z2.extend(zip(ds.test_set[:,0,0,0],te_labels))
+
+    # Should be False
+    print set(z1)==set(z2)
+
 
