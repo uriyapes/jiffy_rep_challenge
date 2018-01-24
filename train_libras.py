@@ -15,7 +15,7 @@ class Model(object):
         num_labels = self.dataset.get_num_of_labels()
         num_channels = 1
 
-        self.batch_size = 287
+        self.batch_size = 251
         self.patch_t_size = 5
         self.patch_D_size = 1
         depth = 16
@@ -23,7 +23,7 @@ class Model(object):
         max_pool_percentage = 0.1
         max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / max_pool_window_size))
-        init_learning_rate = 2*10**-5
+        init_learning_rate = 0.005
 
         self.graph = tf.Graph()
 
@@ -41,29 +41,23 @@ class Model(object):
             layer1_biases = tf.Variable(tf.zeros([depth]))
 
             layer2_weights = tf.Variable(tf.truncated_normal(
-                [self.patch_t_size, self.patch_D_size, depth, depth], stddev=0.1))
-            layer2_biases = tf.Variable(tf.zeros([depth]))
+                [max_pool_out_size * D * depth, num_hidden], stddev=0.1))
+            layer2_biases = tf.Variable(tf.zeros([num_hidden]))
 
             layer3_weights = tf.Variable(tf.truncated_normal(
-                [max_pool_out_size * D * depth, num_hidden], stddev=0.1))
-            layer3_biases = tf.Variable(tf.zeros([num_hidden]))
-
-            layer4_weights = tf.Variable(tf.truncated_normal(
                 [num_hidden, num_labels], stddev=0.1))
-            layer4_biases = tf.Variable(tf.zeros([num_labels]))
+            layer3_biases = tf.Variable(tf.zeros([num_labels]))
 
             # Model.
             def model(data):
                 conv = tf.nn.conv2d(data, layer1_weights, [1, 1, 1, 1], padding='SAME')
                 hidden = tf.nn.relu(conv + layer1_biases)
-                # conv = tf.nn.conv2d(hidden, layer2_weights, [1, 1, 1, 1], padding='SAME')
-                # hidden = tf.nn.relu(conv + layer2_biases)
                 hidden = tf.nn.max_pool(hidden, ksize=[1, max_pool_window_size, 1, 1], strides=[1, max_pool_window_size, 1, 1], padding='SAME')
                 shape = hidden.get_shape().as_list()
                 reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
-                hidden_no_relu = tf.matmul(reshape, layer3_weights) + layer3_biases
+                hidden_no_relu = tf.matmul(reshape, layer2_weights) + layer2_biases
                 hidden = tf.nn.relu(hidden_no_relu)
-                return (tf.matmul(hidden, layer4_weights) + layer4_biases), hidden
+                return (tf.matmul(hidden, layer3_weights) + layer3_biases), hidden
 
             # Training computation.
             # Predictions for the training, validation, and test data.
@@ -86,7 +80,7 @@ class Model(object):
         return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
-        num_steps = 20000
+        num_steps = 3000
 
         train_dataset = self.dataset.get_train_set()
         train_labels = self.dataset.get_train_labels()
