@@ -21,7 +21,7 @@ class Model(object):
         num_labels = self.dataset.get_num_of_labels()
         num_channels = 1
 
-        self.batch_size = 287
+        self.batch_size = 300
         self.patch_t_size = 5
         self.patch_D_size = 1
         depth = 16
@@ -29,7 +29,7 @@ class Model(object):
         max_pool_percentage = 0.1
         self.max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / self.max_pool_window_size))
-        init_learning_rate = 2e-5
+        init_learning_rate = 2e-3
 
         self.graph = tf.Graph()
 
@@ -67,7 +67,7 @@ class Model(object):
                         strides=[1, self.max_pool_window_size_ph, 1, 1],
                         padding='SAME')
                 N = data.get_shape().as_list()[0]
-                reshape = tf.reshape(hidden, [N, 9 * D * depth])
+                reshape = tf.reshape(hidden, [N, 10 * D * depth])
                 hidden_no_relu = tf.matmul(reshape, layer2_weights) + layer2_biases
                 hidden = tf.nn.relu(hidden_no_relu)
                 return (tf.matmul(hidden, layer3_weights) + layer3_biases), hidden
@@ -93,7 +93,7 @@ class Model(object):
         return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
-        num_steps = 20000
+        num_steps = 200
 
         train_dataset = self.dataset.get_train_set()
         train_labels = self.dataset.get_train_labels()
@@ -119,23 +119,33 @@ class Model(object):
                     # print('Validation accuracy: %.1f%%' % self.accuracy(
                     #     self.valid_prediction.eval(), valid_labels))
             print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size}), test_labels))
-            nn = nearest_neighbor.NearestNeighbor()
-            test_embed_vec = self.test_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
-            print('Test accuracy for 1NN: %.3f' % nn.compute_one_nearest_neighbor_accuracy
-                    (train_embed_vec, train_labels, test_embed_vec, test_labels))
+            self.test_embed_vec_result = self.test_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
+            print('Test accuracy for 1NN: %.3f' % self.run_baseline(train_embed_vec, train_labels,
+                                                            self.test_embed_vec_result , test_labels))
+
 
         import collections
         print collections.Counter(tuple(np.argmax(train_labels,1)+1))
         print collections.Counter(tuple(np.argmax(test_labels,1)+1))
 
-        return self.dataset.get_test_set(), test_embed_vec, (np.argmax(self.dataset.get_test_labels(), 1)+1)
 
     def accuracy(self, predictions, labels):
         return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
                 / predictions.shape[0])
 
+    def run_baseline(self, train_set, train_labels, test_set, test_labels):
+        nn = nearest_neighbor.NearestNeighbor()
+        return nn.compute_one_nearest_neighbor_accuracy(train_set, train_labels, test_set, test_labels)
+
+
 if __name__ == '__main__':
-    libras_model = Model()
-    libras_model.get_dataset("libras")
-    libras_model.build_model()
-    test_set, test_embed_vec, test_labels = libras_model.train_model()
+    arabic_model = Model()
+    arabic_model.get_dataset("arabic")
+    # arabic_model.dataset.pca_scatter_plot(arabic_model.dataset.test_set)
+    print('1NN Baseline accuarcy: %.3f' % arabic_model.run_baseline(arabic_model.dataset.train_set,
+                                                                    arabic_model.dataset.train_labels,
+                                                                    arabic_model.dataset.test_set,
+                                                                    arabic_model.dataset.test_labels))
+    arabic_model.build_model()
+    arabic_model.train_model()
+    arabic_model.dataset.pca_scatter_plot(arabic_model.test_embed_vec_result)
