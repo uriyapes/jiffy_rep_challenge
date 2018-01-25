@@ -29,7 +29,7 @@ class Model(object):
         max_pool_percentage = 0.1
         self.max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / self.max_pool_window_size))
-        init_learning_rate = 2e-4
+        init_learning_rate = 2e-5
 
         self.graph = tf.Graph()
 
@@ -93,20 +93,14 @@ class Model(object):
         return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
-        num_steps = 2000
+        num_steps = 20000
 
-        train_dataset = self.dataset.get_train_set()
-        train_labels = self.dataset.get_train_labels()
         # valid_labels = self.dataset.get_validation_labels()
-        test_labels = self.dataset.get_test_labels()
-
         with tf.Session(graph=self.graph) as session:
             tf.global_variables_initializer().run()
             print('Initialized')
             for step in range(num_steps):
-                offset = (step * self.batch_size) % (train_labels.shape[0] - self.batch_size)
-                batch_data = train_dataset[offset:(offset + self.batch_size), :, :, :]
-                batch_labels = train_labels[offset:(offset + self.batch_size), :]
+                batch_data, batch_labels = self.get_mini_batch(step)
                 feed_dict = {self.tf_train_dataset : batch_data, self.tf_train_labels : batch_labels,
                         self.max_pool_window_size_ph : self.max_pool_window_size}
                 _, l, predictions, train_embed_vec = session.run(
@@ -118,15 +112,28 @@ class Model(object):
                     print('Minibatch accuracy: %.1f%%' % self.accuracy(predictions, batch_labels))
                     # print('Validation accuracy: %.1f%%' % self.accuracy(
                     #     self.valid_prediction.eval(), valid_labels))
-            print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size}), test_labels))
+
+            test_labels = self.dataset.get_test_labels()
+            print('Test accuracy for CNN: %.1f%%' % self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size}), test_labels))
             self.test_embed_vec_result = self.test_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
-            print('Test accuracy for 1NN: %.3f' % self.run_baseline(train_embed_vec, train_labels,
+            print('Test accuracy for 1NN: %.3f' % self.run_baseline(train_embed_vec, self.dataset.train_labels,
                                                             self.test_embed_vec_result , test_labels))
-
-
         import collections
-        print collections.Counter(tuple(np.argmax(train_labels,1)+1))
-        print collections.Counter(tuple(np.argmax(test_labels,1)+1))
+        print collections.Counter(tuple(np.argmax(self.dataset.train_labels,1)+1))
+        print collections.Counter(tuple(np.argmax(self.dataset.test_labels,1)+1))
+
+    def get_mini_batch(self, step):
+        train_labels = self.dataset.get_train_labels()
+        offset = (step * self.batch_size)
+        if (offset + self.batch_size) > train_labels.shape[0]:
+            offset = 0
+            self.dataset.re_shuffle()
+            train_labels = self.dataset.get_train_labels()
+        train_dataset = self.dataset.get_train_set()
+
+        batch_data = train_dataset[offset:(offset + self.batch_size), :, :, :]
+        batch_labels = train_labels[offset:(offset + self.batch_size), :]
+        return batch_data, batch_labels
 
 
     def accuracy(self, predictions, labels):

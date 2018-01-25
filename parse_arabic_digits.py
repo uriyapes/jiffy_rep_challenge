@@ -25,7 +25,7 @@ class Dataset(object):
         self.T = MAX_T_SIZE
         self.D = D
 
-        self.train_set, self.train_labels = self.shuffle(self.train_set, self.train_labels)
+        self.re_shuffle()
 
     def get_train_set(self):
         return self.train_set.astype(np.float32)
@@ -45,6 +45,10 @@ class Dataset(object):
     def get_test_labels(self):
         return self.test_labels
 
+    def re_shuffle(self):
+        self.train_set, self.train_labels = self.shuffle(self.train_set, self.train_labels)
+
+    @classmethod
     def shuffle(cls, dataset, labels_one_hot):
         permutations = np.random.permutation(dataset.shape[0])
         labels_one_hot = labels_one_hot[permutations, :]
