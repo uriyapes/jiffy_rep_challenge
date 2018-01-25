@@ -123,16 +123,13 @@ class Model(object):
         print collections.Counter(tuple(np.argmax(self.dataset.test_labels,1)+1))
 
     def get_mini_batch(self, step):
-        train_labels = self.dataset.get_train_labels()
         offset = (step * self.batch_size)
-        if (offset + self.batch_size) > train_labels.shape[0]:
+        if (offset + self.batch_size) > self.dataset.train_labels.shape[0]:
             offset = 0
             self.dataset.re_shuffle()
-            train_labels = self.dataset.get_train_labels()
-        train_dataset = self.dataset.get_train_set()
 
-        batch_data = train_dataset[offset:(offset + self.batch_size), :, :, :]
-        batch_labels = train_labels[offset:(offset + self.batch_size), :]
+        batch_data = self.dataset.train_set[offset:(offset + self.batch_size), :, :, :]
+        batch_labels = self.dataset.train_labels[offset:(offset + self.batch_size), :]
         return batch_data, batch_labels
 
 
