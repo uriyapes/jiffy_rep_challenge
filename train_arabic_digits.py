@@ -29,7 +29,7 @@ class Model(object):
         max_pool_percentage = 0.1
         self.max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / self.max_pool_window_size))
-        init_learning_rate = 2e-3
+        init_learning_rate = 2e-4
 
         self.graph = tf.Graph()
 
@@ -93,7 +93,7 @@ class Model(object):
         return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
-        num_steps = 200
+        num_steps = 2000
 
         train_dataset = self.dataset.get_train_set()
         train_labels = self.dataset.get_train_labels()
@@ -148,4 +148,4 @@ if __name__ == '__main__':
                                                                     arabic_model.dataset.test_labels))
     arabic_model.build_model()
     arabic_model.train_model()
-    arabic_model.dataset.pca_scatter_plot(arabic_model.test_embed_vec_result)
+    # arabic_model.dataset.pca_scatter_plot(arabic_model.test_embed_vec_result)

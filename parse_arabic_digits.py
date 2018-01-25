@@ -25,6 +25,8 @@ class Dataset(object):
         self.T = MAX_T_SIZE
         self.D = D
 
+        self.train_set, self.train_labels = self.shuffle(self.train_set, self.train_labels)
+
     def get_train_set(self):
         return self.train_set.astype(np.float32)
 
@@ -42,6 +44,14 @@ class Dataset(object):
 
     def get_test_labels(self):
         return self.test_labels
+
+    def shuffle(cls, dataset, labels_one_hot):
+        permutations = np.random.permutation(dataset.shape[0])
+        labels_one_hot = labels_one_hot[permutations, :]
+        dataset = dataset[permutations, :, :, :]
+        return dataset, labels_one_hot
+
+
 
     @classmethod
     def read_from_csv(self, src_path_tr, src_path_te):
