@@ -1,6 +1,7 @@
 import math
 import tensorflow as tf
 import parse_libras
+import parse_arabic_digits
 import nearest_neighbor
 import numpy as np
 from tensorflow.python.ops import gen_nn_ops
@@ -9,8 +10,13 @@ class Model(object):
     def __init__(self):
         pass
 
+    def get_dataset(self, dataset_name = "libras"):
+        if dataset_name == "libras":
+            self.dataset = parse_libras.Dataset()
+        else:
+            self.dataset = parse_arabic_digits.Dataset()
+
     def build_model(self):
-        self.dataset = parse_libras.Dataset()
         T, D = self.dataset.get_dimensions()
         num_labels = self.dataset.get_num_of_labels()
         num_channels = 1
@@ -21,8 +27,8 @@ class Model(object):
         depth = 16
         num_hidden = 40
         max_pool_percentage = 0.1
-        max_pool_window_size = round(max_pool_percentage * T)
-        max_pool_out_size = int(math.ceil(T / max_pool_window_size))
+        self.max_pool_window_size = round(max_pool_percentage * T)
+        max_pool_out_size = int(math.ceil(T / self.max_pool_window_size))
         init_learning_rate = 2e-5
 
         self.graph = tf.Graph()
@@ -30,12 +36,13 @@ class Model(object):
         with self.graph.as_default():
             # Input data.
             self.tf_train_dataset = tf.placeholder(
-                tf.float32, shape=(self.batch_size, T, D, num_channels))
-            self.tf_train_labels = tf.placeholder(tf.float32, shape=(self.batch_size, num_labels))
+                tf.float32, shape=(self.batch_size, T, D, num_channels), name="train_dataset_placeholder")
+            self.tf_train_labels = tf.placeholder(tf.float32, shape=(self.batch_size, num_labels),
+                                                  name="train_labels_placeholder")
             # tf_valid_dataset = tf.constant(self.dataset.get_validation_set())
             tf_test_dataset = tf.constant(self.dataset.get_test_set())
 
-            self.max_pool_window_size = tf.placeholder(tf.int32, shape=())
+            self.max_pool_window_size_ph = tf.placeholder(tf.int32, shape=())
 
             # Variables.
             layer1_weights = tf.Variable(tf.truncated_normal(
@@ -56,8 +63,8 @@ class Model(object):
                 hidden = tf.nn.relu(conv + layer1_biases)
                 hidden = gen_nn_ops._max_pool_v2(
                         hidden,
-                        ksize=[1, self.max_pool_window_size, 1, 1],
-                        strides=[1, self.max_pool_window_size, 1, 1],
+                        ksize=[1, self.max_pool_window_size_ph, 1, 1],
+                        strides=[1, self.max_pool_window_size_ph, 1, 1],
                         padding='SAME')
                 N = data.get_shape().as_list()[0]
                 reshape = tf.reshape(hidden, [N, 9 * D * depth])
@@ -101,7 +108,7 @@ class Model(object):
                 batch_data = train_dataset[offset:(offset + self.batch_size), :, :, :]
                 batch_labels = train_labels[offset:(offset + self.batch_size), :]
                 feed_dict = {self.tf_train_dataset : batch_data, self.tf_train_labels : batch_labels,
-                        self.max_pool_window_size : 5}
+                        self.max_pool_window_size_ph : self.max_pool_window_size}
                 _, l, predictions, train_embed_vec = session.run(
                     [self.optimizer, self.loss, self.train_prediction, self.train_embed_vec], feed_dict=feed_dict)
                 if (step % 50 == 0):
@@ -111,14 +118,17 @@ class Model(object):
                     print('Minibatch accuracy: %.1f%%' % self.accuracy(predictions, batch_labels))
                     # print('Validation accuracy: %.1f%%' % self.accuracy(
                     #     self.valid_prediction.eval(), valid_labels))
-            print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size : 5}), test_labels))
+            print('Test accuracy: %.1f%%' % self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size}), test_labels))
             nn = nearest_neighbor.NearestNeighbor()
+            test_embed_vec = self.test_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
             print('Test accuracy for 1NN: %.3f' % nn.compute_one_nearest_neighbor_accuracy
-                    (train_embed_vec, train_labels, self.test_embed_vec.eval(feed_dict={self.max_pool_window_size : 5}), test_labels))
+                    (train_embed_vec, train_labels, test_embed_vec, test_labels))
 
         import collections
         print collections.Counter(tuple(np.argmax(train_labels,1)+1))
         print collections.Counter(tuple(np.argmax(test_labels,1)+1))
+
+        return self.dataset.get_test_set(), test_embed_vec, (np.argmax(self.dataset.get_test_labels(), 1)+1)
 
     def accuracy(self, predictions, labels):
         return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
@@ -126,5 +136,6 @@ class Model(object):
 
 if __name__ == '__main__':
     libras_model = Model()
+    libras_model.get_dataset("libras")
     libras_model.build_model()
-    libras_model.train_model()
+    test_set, test_embed_vec, test_labels = libras_model.train_model()

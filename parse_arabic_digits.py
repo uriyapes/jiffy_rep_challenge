@@ -93,7 +93,22 @@ class Dataset(object):
     @classmethod
     def encode_one_hot(self, class_labels):
         labels_one_hot = \
-                (np.arange(MIN_LABEL, MAX_LABEL + 1) == \
+                (np.arange(MIN_LABEL, MAX_LABEL) == \
                     np.array(class_labels)[:,None]).astype(np.float32)
         return labels_one_hot
 
+
+    def pca_scatter_plot(self, data):
+        X = np.reshape(data, (data.shape[0], -1), order='F')
+        X_norm = (X - X.min()) / (X.max() - X.min())
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        from sklearn.decomposition import PCA as sklearnPCA
+        pca = sklearnPCA(n_components=2, svd_solver='auto')  # 2-dimensional PCA
+        transformed = pd.DataFrame(pca.fit_transform(X_norm))
+
+        for i in xrange(10):
+            plt.scatter(transformed[0][i*220:(i+1)*220], transformed[1][i*220:(i+1)*220], label='Class{}'.format(i))
+
+        plt.legend()
+        plt.show()
