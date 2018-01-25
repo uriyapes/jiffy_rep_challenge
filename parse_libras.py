@@ -31,10 +31,6 @@ class Dataset(object):
         train_set, train_labels, test_set, test_labels = \
                 self.generate_balanced_splits(samples, labels)
 
-        labels_one_hot = \
-                (np.arange(min_label, max_label + 1) == \
-                labels[:,None]).astype(np.float32)
-
         train_set_len = train_set.shape[0]
         if validation_set_percentage == 0:
             validation_set_len = 0
@@ -49,7 +45,6 @@ class Dataset(object):
         self.train_labels = self.encode_one_hot(train_labels)
         # self.validation_labels = validation_labels
         self.test_labels = self.encode_one_hot(test_labels)
-        self.N = N
         self.T = T
         self.D = D
 
@@ -63,7 +58,7 @@ class Dataset(object):
         return self.test_set.astype(np.float32)
 
     def get_dimensions(self):
-        return (self.N, self.T, self.D)
+        return (self.T, self.D)
 
     def get_num_of_labels(self):
         return num_labels

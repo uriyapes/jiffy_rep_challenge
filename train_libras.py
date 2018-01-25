@@ -5,14 +5,13 @@ import nearest_neighbor
 import numpy as np
 from tensorflow.python.ops import gen_nn_ops
 
-
 class Model(object):
     def __init__(self):
         pass
 
     def build_model(self):
         self.dataset = parse_libras.Dataset()
-        N, T, D = self.dataset.get_dimensions()
+        T, D = self.dataset.get_dimensions()
         num_labels = self.dataset.get_num_of_labels()
         num_channels = 1
 
