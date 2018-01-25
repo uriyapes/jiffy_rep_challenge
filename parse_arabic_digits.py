@@ -93,7 +93,6 @@ class Dataset(object):
     @classmethod
     def encode_one_hot(self, class_labels):
         labels_one_hot = \
-                (np.arange(MIN_LABEL, MAX_LABEL + 1) == \
+                (np.arange(MIN_LABEL, MAX_LABEL) == \
                     np.array(class_labels)[:,None]).astype(np.float32)
         return labels_one_hot
-
