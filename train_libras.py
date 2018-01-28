@@ -29,8 +29,8 @@ class Model(object):
         init_learning_rate = 2e-5
 
         # Input data.
-        self.tf_train_minibatch= tf.placeholder(
-            tf.float32, shape=(self.batch_size, T, D, num_channels), name="train_dataset_placeholder")
+        self.tf_train_minibatch = tf.placeholder(
+            tf.float32, shape=(self.batch_size, T, D, num_channels), name="train_minibatch_placeholder")
         self.tf_train_labels = tf.placeholder(tf.float32, shape=(self.batch_size, num_labels),
                                               name="train_labels_placeholder")
         self.tf_train_dataset = tf.constant(self.dataset.get_train_set())
@@ -84,10 +84,6 @@ class Model(object):
             tf.nn.softmax_cross_entropy_with_logits(labels=self.tf_train_labels, logits=logits))
         # Optimizer.
         self.optimizer = self.build_optimizer(init_learning_rate)
-
-    def build_optimizer(self, init_learning_rate):
-        return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
-        # return tf.train.GradientDescentOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
         num_steps = 20000
@@ -154,6 +150,10 @@ class Model(object):
     def run_baseline(self, train_set, train_labels, test_set, test_labels):
         nn = nearest_neighbor.NearestNeighbor()
         return nn.compute_one_nearest_neighbor_accuracy(train_set, train_labels, test_set, test_labels)
+
+    def build_optimizer(self, init_learning_rate):
+        return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
+        # return tf.train.GradientDescentOptimizer(init_learning_rate).minimize(self.loss)
 
 if __name__ == '__main__':
     libras_model = Model()
