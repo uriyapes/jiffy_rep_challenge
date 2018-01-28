@@ -10,11 +10,8 @@ class Model(object):
     def __init__(self):
         pass
 
-    def get_dataset(self, dataset_name = "libras"):
-        if dataset_name == "libras":
-            self.dataset = parse_libras.Dataset()
-        else:
-            self.dataset = parse_arabic_digits.Dataset()
+    def get_dataset(self):
+        self.dataset = parse_libras.Dataset()
 
     def build_model(self):
         T, D = self.dataset.get_dimensions()
@@ -151,10 +148,11 @@ class Model(object):
 
 if __name__ == '__main__':
     libras_model = Model()
-    libras_model.get_dataset("libras")
+    libras_model.get_dataset()
     print('1NN Baseline accuarcy: %.3f' % libras_model.run_baseline(libras_model.dataset.train_set,
                                                                     libras_model.dataset.train_labels,
                                                                     libras_model.dataset.test_set,
                                                                     libras_model.dataset.test_labels))
     libras_model.build_model()
     test_set, test_embed_vec, test_labels = libras_model.train_model()
+
