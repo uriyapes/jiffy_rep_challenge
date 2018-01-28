@@ -89,7 +89,8 @@ class Dataset(object):
 
     @classmethod
     def generate_balanced_splits(cls, samples, labels):
-        sss = StratifiedShuffleSplit(n_splits=1, test_size=test_set_percentage, random_state=0)
+        #random_state=None for real random or random_state={seed number}
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=test_set_percentage, random_state=None)
         sss.get_n_splits(samples, labels)
         for train_index, test_index in sss.split(samples, labels):
             train_set = samples[train_index]
