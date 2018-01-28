@@ -136,6 +136,16 @@ class Dataset(object):
         permutations = np.random.permutation(len(vector))
         return vector[permutations]
 
+    def re_shuffle(self):
+        self.train_set, self.train_labels = self.shuffle2(self.train_set, self.train_labels)
+
+    @classmethod
+    def shuffle2(cls, dataset, labels_one_hot):
+        permutations = np.random.permutation(dataset.shape[0])
+        labels_one_hot = labels_one_hot[permutations, :]
+        dataset = dataset[permutations, :, :, :]
+        return dataset, labels_one_hot
+
 #  if __name__=='__main__':
     #  ds = Dataset()
     #  #  labels = np.concatenate([1 * np.ones(11), 2 * np.ones(11), 3 * np.ones(11)]).astype(int)

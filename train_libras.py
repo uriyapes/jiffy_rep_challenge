@@ -21,7 +21,7 @@ class Model(object):
         num_labels = self.dataset.get_num_of_labels()
         num_channels = 1
 
-        self.batch_size = 287
+        self.batch_size = 288
         self.patch_t_size = 5
         self.patch_D_size = 1
         depth = 16
@@ -86,27 +86,26 @@ class Model(object):
             self.loss = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(labels=self.tf_train_labels, logits=logits))
             # Optimizer.
-            # self.optimizer = tf.train.GradientDescentOptimizer(0.005).minimize(self.loss)
             self.optimizer = self.build_optimizer(init_learning_rate)
 
     def build_optimizer(self, init_learning_rate):
         return tf.train.AdamOptimizer(init_learning_rate).minimize(self.loss)
+        # return tf.train.GradientDescentOptimizer(init_learning_rate).minimize(self.loss)
 
     def train_model(self):
         num_steps = 20000
 
         train_dataset = self.dataset.get_train_set()
-        train_labels = self.dataset.get_train_labels()
         # valid_labels = self.dataset.get_validation_labels()
         test_labels = self.dataset.get_test_labels()
 
         with tf.Session(graph=self.graph) as session:
             tf.global_variables_initializer().run()
             print('Initialized')
+            self.mini_batch_step = 0
             for step in range(num_steps):
-                offset = (step * self.batch_size) % (train_labels.shape[0] - self.batch_size)
-                batch_data = train_dataset[offset:(offset + self.batch_size), :, :, :]
-                batch_labels = train_labels[offset:(offset + self.batch_size), :]
+
+                batch_data, batch_labels = self.get_mini_batch()
                 feed_dict = {self.tf_train_dataset : batch_data, self.tf_train_labels : batch_labels,
                         self.max_pool_window_size_ph : self.max_pool_window_size}
                 _, l, predictions, train_embed_vec = session.run(
@@ -122,20 +121,40 @@ class Model(object):
             nn = nearest_neighbor.NearestNeighbor()
             test_embed_vec = self.test_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
             print('Test accuracy for 1NN: %.3f' % nn.compute_one_nearest_neighbor_accuracy
-                    (train_embed_vec, train_labels, test_embed_vec, test_labels))
+                    (train_embed_vec, batch_labels, test_embed_vec, test_labels))
 
         import collections
-        print collections.Counter(tuple(np.argmax(train_labels,1)+1))
+        print collections.Counter(tuple(np.argmax(batch_labels,1)+1))
         print collections.Counter(tuple(np.argmax(test_labels,1)+1))
 
         return self.dataset.get_test_set(), test_embed_vec, (np.argmax(self.dataset.get_test_labels(), 1)+1)
+
+    def get_mini_batch(self):
+        offset = (self.mini_batch_step * self.batch_size)
+        if (offset + self.batch_size) > self.dataset.train_labels.shape[0]:
+            offset = 0
+            self.mini_batch_step = 0
+            # self.dataset.re_shuffle()
+
+        batch_data = self.dataset.train_set[offset:(offset + self.batch_size), :, :, :]
+        batch_labels = self.dataset.train_labels[offset:(offset + self.batch_size), :]
+        self.mini_batch_step += 1
+        return batch_data, batch_labels
 
     def accuracy(self, predictions, labels):
         return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
                 / predictions.shape[0])
 
+    def run_baseline(self, train_set, train_labels, test_set, test_labels):
+        nn = nearest_neighbor.NearestNeighbor()
+        return nn.compute_one_nearest_neighbor_accuracy(train_set, train_labels, test_set, test_labels)
+
 if __name__ == '__main__':
     libras_model = Model()
     libras_model.get_dataset("libras")
+    print('1NN Baseline accuarcy: %.3f' % libras_model.run_baseline(libras_model.dataset.train_set,
+                                                                    libras_model.dataset.train_labels,
+                                                                    libras_model.dataset.test_set,
+                                                                    libras_model.dataset.test_labels))
     libras_model.build_model()
     test_set, test_embed_vec, test_labels = libras_model.train_model()
