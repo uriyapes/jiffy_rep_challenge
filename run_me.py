@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import csv
 
 import train_libras
@@ -39,14 +38,6 @@ def print_results_lists(l_baseline_acc, l_network_acc, l_nn_acc):
     print l_nn_acc
 
 
-def print_graph(l):
-    plt.figure()
-    for i in xrange(len(l)):
-        plt.scatter(i, l[i], c='b')
-
-    plt.legend()
-    plt.show()
-
 def write_results_to_csv(list):
     with open('results.csv', 'ab') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=' ')  #DELETE: quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -74,11 +65,6 @@ if __name__ == '__main__':
     write_results_to_csv(l_network_acc)
     write_results_to_csv(l_nn_acc)
 
-    # plt.ion()
-    # print_graph(l_baseline_acc)
-    # print_graph(l_network_acc)
-    # print_graph(l_nn_acc)
-    # plt.show(block=True)
 
 
 
