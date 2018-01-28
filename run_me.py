@@ -27,14 +27,31 @@ def run_model(model):
     test_set, test_embed_vec, test_labels, network_acc, nn_acc = model.eval_model()
     return network_acc, nn_acc
 
+def print_results_lists(l_baseline_acc, l_network_acc, l_nn_acc):
+    print "baseline accuracy list:"
+    print l_baseline_acc
+    print "\nnetwork accuracy list:"
+    print l_network_acc
+    print "\n1-NN accuracy list: "
+    print l_nn_acc
+
 
 if __name__ == '__main__':
     model_name = "libras"
     l_baseline_acc = []
+    l_network_acc = []
+    l_nn_acc = []
     num_of_model_runs = 2
     model = get_model(model_name)
     for i in xrange(num_of_model_runs):
+        print('########## Number of model run: {0} ##########'.format(i))
         init_model(model)
         baseline_acc = run_baseline(model)
+        l_baseline_acc.append(baseline_acc)
         network_acc, nn_acc = run_model(model)
+        l_network_acc.append(network_acc)
+        l_nn_acc.append(nn_acc)
         print('baseline accuracy: {0:.3f}\nnetwork accuracy: {1:.1f}%\n1-NN accuracy: {2:.3f}'.format(baseline_acc,network_acc,nn_acc))
+
+    print_results_lists(l_baseline_acc, l_network_acc, l_nn_acc)
+
