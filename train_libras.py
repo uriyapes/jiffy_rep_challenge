@@ -105,7 +105,7 @@ class Model(object):
                     print('batch_labels: {}'.format(np.argmax(batch_labels, 1)))
                     print('predictions: {}'.format(np.argmax(predictions, 1)))
                     print('Minibatch loss at step %d: %f' % (step, l))
-                    print('Minibatch accuracy: %.1f%%' % self.accuracy(predictions, batch_labels))
+                    print('Minibatch accuracy: %.3f' % self.accuracy(predictions, batch_labels))
                     # print('Validation accuracy: %.1f%%' % self.accuracy(
                     #     self.valid_prediction.eval(), valid_labels))
 
@@ -118,7 +118,7 @@ class Model(object):
         test_labels = self.dataset.get_test_labels()
         with self.sess.as_default():
             network_acc = self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size}), test_labels)
-            print('Test accuracy of the network classifier: %.1f%%' % network_acc)
+            print('Test accuracy of the network classifier: %.3f' % network_acc)
 
             train_embed_vec_res = self.train_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
             test_embed_vec_res = self.test_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
