@@ -99,8 +99,9 @@ class Model(object):
         with tf.Session(graph=self.graph) as session:
             tf.global_variables_initializer().run()
             print('Initialized')
+            self.mini_batch_step = 0
             for step in range(num_steps):
-                batch_data, batch_labels = self.get_mini_batch(step)
+                batch_data, batch_labels = self.get_mini_batch()
                 feed_dict = {self.tf_train_dataset : batch_data, self.tf_train_labels : batch_labels,
                         self.max_pool_window_size_ph : self.max_pool_window_size}
                 _, l, predictions, train_embed_vec = session.run(
@@ -122,14 +123,16 @@ class Model(object):
         print collections.Counter(tuple(np.argmax(self.dataset.train_labels,1)+1))
         print collections.Counter(tuple(np.argmax(self.dataset.test_labels,1)+1))
 
-    def get_mini_batch(self, step):
-        offset = (step * self.batch_size)
+    def get_mini_batch(self):
+        offset = (self.mini_batch_step * self.batch_size)
         if (offset + self.batch_size) > self.dataset.train_labels.shape[0]:
             offset = 0
+            self.mini_batch_step = 0
             self.dataset.re_shuffle()
 
         batch_data = self.dataset.train_set[offset:(offset + self.batch_size), :, :, :]
         batch_labels = self.dataset.train_labels[offset:(offset + self.batch_size), :]
+        self.mini_batch_step += 1
         return batch_data, batch_labels
 
 
