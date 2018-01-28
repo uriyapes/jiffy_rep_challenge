@@ -88,7 +88,7 @@ class Model(object):
 
     def train_model(self):
         num_steps = 20000
-        self.initial_train_labels = self.dataset.get_train_labels()
+        self.initial_train_labels = np.copy(self.dataset.get_train_labels())
         # valid_labels = self.dataset.get_validation_labels()
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
@@ -99,8 +99,8 @@ class Model(object):
                 batch_data, batch_labels = self.get_mini_batch()
                 feed_dict = {self.tf_train_minibatch : batch_data, self.tf_train_labels : batch_labels,
                         self.max_pool_window_size_ph : self.max_pool_window_size}
-                _, l, predictions, train_embed_vec = self.sess.run(
-                    [self.optimizer, self.loss, self.train_prediction, self.train_embed_vec], feed_dict=feed_dict)
+                _, l, predictions = self.sess.run(
+                    [self.optimizer, self.loss, self.train_prediction], feed_dict=feed_dict)
                 if (step % 50 == 0):
                     print('batch_labels: {}'.format(np.argmax(batch_labels, 1)))
                     print('predictions: {}'.format(np.argmax(predictions, 1)))
@@ -117,6 +117,7 @@ class Model(object):
 
 
     def eval_model(self):
+        assert (self.initial_train_labels != self.dataset.train_set)
         test_labels = self.dataset.get_test_labels()
         with self.sess.as_default():
             network_acc = self.accuracy(self.test_prediction.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size}), test_labels)
@@ -148,7 +149,7 @@ class Model(object):
 
 
     def accuracy(self, predictions, labels):
-        return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
+        return (1.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
                 / predictions.shape[0])
 
     def run_baseline(self, train_set, train_labels, test_set, test_labels):
@@ -164,10 +165,10 @@ if __name__ == '__main__':
     arabic_model = Model()
     arabic_model.get_dataset()
     # arabic_model.dataset.pca_scatter_plot(arabic_model.dataset.test_set)
-    print('1NN Baseline accuarcy: %.3f' % arabic_model.run_baseline(arabic_model.dataset.train_set,
-                                                                    arabic_model.dataset.train_labels,
-                                                                    arabic_model.dataset.test_set,
-                                                                    arabic_model.dataset.test_labels))
+    # print('1NN Baseline accuarcy: %.3f' % arabic_model.run_baseline(arabic_model.dataset.train_set,
+    #                                                                 arabic_model.dataset.train_labels,
+    #                                                                 arabic_model.dataset.test_set,
+    #                                                                 arabic_model.dataset.test_labels))
     arabic_model.build_model()
     arabic_model.train_model()
     test_set, test_embed_vec, test_labels, network_acc, nn_acc = arabic_model.eval_model()

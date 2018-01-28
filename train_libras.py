@@ -87,7 +87,7 @@ class Model(object):
 
     def train_model(self):
         num_steps = 20000
-
+        self.initial_train_labels = np.copy(self.dataset.get_train_labels())
         # valid_labels = self.dataset.get_validation_labels()
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
@@ -123,7 +123,7 @@ class Model(object):
             train_embed_vec_res = self.train_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
             test_embed_vec_res = self.test_embed_vec.eval(feed_dict={self.max_pool_window_size_ph: self.max_pool_window_size})
 
-            nn_acc = self.run_baseline(train_embed_vec_res, self.dataset.train_labels,
+            nn_acc = self.run_baseline(train_embed_vec_res, self.initial_train_labels,
                                        test_embed_vec_res, self.dataset.test_labels)
 
             print('Test accuracy for 1NN: %.3f' % nn_acc)
@@ -144,7 +144,7 @@ class Model(object):
         return batch_data, batch_labels
 
     def accuracy(self, predictions, labels):
-        return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
+        return (1.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
                 / predictions.shape[0])
 
     def run_baseline(self, train_set, train_labels, test_set, test_labels):
