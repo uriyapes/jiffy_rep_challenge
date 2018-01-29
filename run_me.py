@@ -1,16 +1,11 @@
 import csv
 import numpy as np
 
-import train_libras
-import train_arabic_digits
+import jiffy_model
 
 
 def get_model(model_name, embed_vec_size):
-
-    if model_name == "libras":
-        model = train_libras.Model(embed_vec_size)
-    elif model_name == "arabic digits":
-        model = train_arabic_digits.Model(embed_vec_size)
+    model = jiffy_model.Model(model_name, embed_vec_size)
     return model
 
 def init_model(model):
@@ -89,8 +84,12 @@ def run_model_with_diff_hyperparams(model_name, num_of_model_runs_per_config, em
 
 if __name__ == '__main__':
     model_name = "arabic digits"
-    num_of_model_runs = 5
+    # model_name = "libras"
+    num_of_model_runs = 1
     run_baseline_flag = False
-    # run_model_multiple_times(model_name, num_of_model_runs)
+
     embedded_size_list = [30, 40, 50]
+    # embedded_size_list = [40]
     run_model_with_diff_hyperparams(model_name, num_of_model_runs, embedded_size_list, run_baseline_flag)
+
+    # run_model_multiple_times(model_name, num_of_model_runs)
