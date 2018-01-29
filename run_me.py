@@ -66,7 +66,7 @@ def run_model_multiple_times(model_name, num_of_model_runs, embed_vec_size = 40,
 
 
 def run_model_with_diff_hyperparams(model_name, num_of_model_runs_per_config, embed_size_l, run_baseline_flag = False):
-    file_name_template = "results_embed_size_"
+    file_name_template = r"results/results_embed_size_"
     l_avg_nn_acc = []
     l_avg_network_acc = []
     for i in xrange(len(embed_size_l)):
@@ -81,7 +81,7 @@ def run_model_with_diff_hyperparams(model_name, num_of_model_runs_per_config, em
         l_avg_network_acc.append(np.mean(l_network_acc))
         l_avg_nn_acc.append(np.mean(l_nn_acc))
 
-    file_name = "avg_results_over_" + str(num_of_model_runs_per_config) + "_runs"
+    file_name = r"results/avg_results_over_" + str(num_of_model_runs_per_config) + "_runs"
     write_results_to_csv(embed_size_l, file_name)
     write_results_to_csv(l_avg_network_acc, file_name)
     write_results_to_csv(l_avg_nn_acc, file_name)
@@ -89,8 +89,8 @@ def run_model_with_diff_hyperparams(model_name, num_of_model_runs_per_config, em
 
 if __name__ == '__main__':
     model_name = "arabic digits"
-    num_of_model_runs = 10
+    num_of_model_runs = 5
     run_baseline_flag = False
     # run_model_multiple_times(model_name, num_of_model_runs)
-    embedded_size_list = [30,40,50]
+    embedded_size_list = [30, 40, 50]
     run_model_with_diff_hyperparams(model_name, num_of_model_runs, embedded_size_list, run_baseline_flag)
