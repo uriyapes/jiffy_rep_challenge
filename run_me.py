@@ -85,7 +85,7 @@ def run_model_with_diff_hyperparams(model_name, num_of_model_runs_per_config, em
 if __name__ == '__main__':
     model_name = "arabic digits"
     # model_name = "libras"
-    num_of_model_runs = 1
+    num_of_model_runs = 5
     run_baseline_flag = False
 
     embedded_size_list = [30, 40, 50]
