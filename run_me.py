@@ -1,15 +1,16 @@
 import csv
+import numpy as np
 
 import train_libras
 import train_arabic_digits
 
 
-def get_model(model_name):
+def get_model(model_name, embed_vec_size):
 
     if model_name == "libras":
-        model = train_libras.Model()
+        model = train_libras.Model(embed_vec_size)
     elif model_name == "arabic digits":
-        model = train_arabic_digits.Model()
+        model = train_arabic_digits.Model(embed_vec_size)
     return model
 
 def init_model(model):
@@ -38,34 +39,58 @@ def print_results_lists(l_baseline_acc, l_network_acc, l_nn_acc):
     print l_nn_acc
 
 
-def write_results_to_csv(list):
-    with open('results.csv', 'ab') as csvfile:
+def write_results_to_csv(list, file_name = 'results.csv'):
+    with open(file_name, 'ab') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=' ')  #DELETE: quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerow(list)
 
-if __name__ == '__main__':
-    model_name = "libras"
+def run_model_multiple_times(model_name, num_of_model_runs, embed_vec_size = 40, run_baseline_flag = True):
     l_baseline_acc = []
     l_network_acc = []
     l_nn_acc = []
-    num_of_model_runs = 10
-    model = get_model(model_name)
+    model = get_model(model_name, embed_vec_size)
     for i in xrange(num_of_model_runs):
         print('########## Number of model run: {0} ##########'.format(i))
         init_model(model)
-        baseline_acc = run_baseline(model)
-        l_baseline_acc.append(baseline_acc)
+        if run_baseline_flag:
+            baseline_acc = run_baseline(model)
+            l_baseline_acc.append(baseline_acc)
+            print('baseline accuracy: {0:.3f}'.format(baseline_acc))
         network_acc, nn_acc = run_model(model)
         l_network_acc.append(network_acc)
         l_nn_acc.append(nn_acc)
-        print('baseline accuracy: {0:.3f}\nnetwork accuracy: {1:.3f}%\n1-NN accuracy: {2:.3f}'.format(baseline_acc,network_acc,nn_acc))
+        print('network accuracy: {0:.3f}%\n1-NN accuracy: {1:.3f}'.format(network_acc,nn_acc))
 
     print_results_lists(l_baseline_acc, l_network_acc, l_nn_acc)
-    write_results_to_csv(l_baseline_acc)
-    write_results_to_csv(l_network_acc)
-    write_results_to_csv(l_nn_acc)
+    return l_baseline_acc, l_network_acc, l_nn_acc
 
 
+def run_model_with_diff_hyperparams(model_name, num_of_model_runs_per_config, embed_size_l, run_baseline_flag = False):
+    file_name_template = "results_embed_size_"
+    l_avg_nn_acc = []
+    l_avg_network_acc = []
+    for i in xrange(len(embed_size_l)):
+        file_name = file_name_template + str(embed_size_l[i])
+        l_baseline_acc, l_network_acc, l_nn_acc = run_model_multiple_times\
+                                                (model_name, num_of_model_runs_per_config, embed_size_l[i], run_baseline_flag)
+
+        if run_baseline_flag:
+            write_results_to_csv(l_baseline_acc, file_name)
+        write_results_to_csv(l_network_acc, file_name)
+        write_results_to_csv(l_nn_acc, file_name)
+        l_avg_network_acc.append(np.mean(l_network_acc))
+        l_avg_nn_acc.append(np.mean(l_nn_acc))
+
+    file_name = "avg_results_over_" + str(num_of_model_runs_per_config) + "_runs"
+    write_results_to_csv(embed_size_l, file_name)
+    write_results_to_csv(l_avg_network_acc, file_name)
+    write_results_to_csv(l_avg_nn_acc, file_name)
 
 
-
+if __name__ == '__main__':
+    model_name = "arabic digits"
+    num_of_model_runs = 10
+    run_baseline_flag = False
+    # run_model_multiple_times(model_name, num_of_model_runs)
+    embedded_size_list = [30,40,50]
+    run_model_with_diff_hyperparams(model_name, num_of_model_runs, embedded_size_list, run_baseline_flag)

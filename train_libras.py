@@ -7,8 +7,8 @@ import numpy as np
 from tensorflow.python.ops import gen_nn_ops
 
 class Model(object):
-    def __init__(self):
-        pass
+    def __init__(self, embed_vec_size = 40):
+        self.embed_vec_size = embed_vec_size
 
     def get_dataset(self):
         self.dataset = parse_libras.Dataset()
@@ -22,7 +22,7 @@ class Model(object):
         self.patch_t_size = 5
         self.patch_D_size = 1
         depth = 16
-        num_hidden = 40
+        num_hidden = self.embed_vec_size
         max_pool_percentage = 0.1
         self.max_pool_window_size = round(max_pool_percentage * T)
         max_pool_out_size = int(math.ceil(T / self.max_pool_window_size))
